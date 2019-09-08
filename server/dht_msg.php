@@ -95,10 +95,10 @@ if(!empty($call) && !empty($node_id))
             $limit = $config["neighbour_limit"];
             start_transaction($con);
             $timestamp = time();
-            $timestamp = mysql_real_escape_string($timestamp, $con);
+            $timestamp = mysqli_real_escape_string( $con, $timestamp);
             $freshness = time() - $config["alive_timeout"];
-            $freshness = mysql_real_escape_string($freshness, $con);
-            $network_id = mysql_real_escape_string($network_id, $con);
+            $freshness = mysqli_real_escape_string( $con, $freshness);
+            $network_id = mysqli_real_escape_string( $con, $network_id);
             $nodes = array();
             
             #Fetch one random node to reserve for testing.
@@ -107,24 +107,24 @@ if(!empty($call) && !empty($node_id))
             {
                 #Fetch nodes to reserve.
                 $sql = "SELECT * FROM `nodes` WHERE (`reservation_expiry`<$timestamp  OR `reservation_expiry`=0) AND `last_alive`>=$freshness AND `network_id`='$network_id' ORDER BY rand() LIMIT 1 FOR UPDATE";
-                $result = mysql_query($sql, $con);
-                while($row = mysql_fetch_assoc($result))
+                $result = mysqli_query( $con, $sql);
+                while($row = mysqli_fetch_assoc($result))
                 {
                     $row["can_test"] = 1;
                     $nodes[] = $row;
-                    $node_id = mysql_real_escape_string($row["id"], $con);
+                    $node_id = mysqli_real_escape_string( $con, $row["id"]);
                     $restrictions = " AND `id`<>$node_id";
                 }
                 
                 #Reserve those nodes.
                 $expiry = time() + $config["reservation_timeout"];
-                $expiry = mysql_real_escape_string($expiry, $con);
+                $expiry = mysqli_real_escape_string( $con, $expiry);
                 foreach($nodes as $value)
                 {
                     $id = $value["id"];
-                    $id = mysql_real_escape_string($id, $con);
+                    $id = mysqli_real_escape_string( $con, $id);
                     $sql = "UPDATE `nodes` SET `reservation_expiry`=$expiry WHERE `id`=$id";
-                    mysql_query($sql, $con);
+                    mysqli_query( $con, $sql);
                 }
                 
                 #Reduce limit for next section (since we just got a node.)
@@ -135,8 +135,8 @@ if(!empty($call) && !empty($node_id))
             if($limit)
             {
                 $sql = "SELECT * FROM `nodes` WHERE `last_alive`>=$freshness AND `network_id`='$network_id' $restrictions ORDER BY rand() LIMIT $limit FOR UPDATE";
-                $result = mysql_query($sql, $con);
-                while($row = mysql_fetch_assoc($result))
+                $result = mysqli_query( $con, $sql);
+                while($row = mysqli_fetch_assoc($result))
                 {
                     $row["can_test"] = 0;
                     $nodes[] = $row;
@@ -179,9 +179,9 @@ if(!empty($call) && !empty($node_id))
             #mutexes so tests line up perfectly. After that - its random.
             start_transaction($con);
             #mysql_query("LOCK TABLES `nodes` WRITE", $con);
-            $node_id = mysql_real_escape_string($node["id"], $con);
+            $node_id = mysqli_real_escape_string( $con, $node["id"]);
             $sql = "SELECT * FROM `nodes` WHERE `id`=" . $node_id . "FOR UPDATE";
-            mysql_query($sql, $con);
+            mysqli_query( $con, $sql);
             $fresh_node_no = count_fresh_nodes($con);
             #$config["neighbour_limit"] + 1
             if($fresh_node_no % 2 == 0 && $fresh_node_no != 0)
@@ -204,10 +204,10 @@ if(!empty($call) && !empty($node_id))
             
             $id = $node["id"];
             $last_alive = time();
-            $id = mysql_real_escape_string($id, $con);
-            $last_alive = mysql_real_escape_string($last_alive, $con);
+            $id = mysqli_real_escape_string( $con, $id);
+            $last_alive = mysqli_real_escape_string( $con, $last_alive);
             $sql = "UPDATE `nodes` SET `has_mutex`=$has_mutex,`last_alive`=$last_alive WHERE `id`=$id";
-            mysql_query($sql, $con);
+            mysqli_query( $con, $sql);
             #mysql_query("UNLOCK TABLES", $con);
             end_transaction($con, 1);
             
@@ -224,14 +224,14 @@ if(!empty($call) && !empty($node_id))
             #Register new node.
             if(get_node($node_id) == FALSE)
             {
-                $node_id = mysql_real_escape_string($node_id, $con);
-                $password = mysql_real_escape_string($password, $con);
-                $ip = mysql_real_escape_string($ip, $con);
-                $port = mysql_real_escape_string($port, $con);
-                $network_id = mysql_real_escape_string($network_id, $con);
+                $node_id = mysqli_real_escape_string( $con, $node_id);
+                $password = mysqli_real_escape_string( $con, $password);
+                $ip = mysqli_real_escape_string( $con, $ip);
+                $port = mysqli_real_escape_string( $con, $port);
+                $network_id = mysqli_real_escape_string( $con, $network_id);
                 $timestamp = time();
                 $sql = "INSERT INTO `nodes` (`node_id`, `ip`, `port`, `password`, `last_alive`, `reservation_expiry`, `network_id`) VALUES ('$node_id', '$ip', $port, '$password', $timestamp, 0, '$network_id');";
-                mysql_query($sql);
+                mysqli_query($GLOBALS["___mysqli_ston"], $sql);
             }
             else
             {
@@ -260,15 +260,15 @@ if(!empty($call) && !empty($node_id))
             }
             
             #Put message into DB.
-            $msg = mysql_real_escape_string($msg, $con);
-            $dest_node_id = mysql_real_escape_string($dest_node_id, $con);
+            $msg = mysqli_real_escape_string( $con, $msg);
+            $dest_node_id = mysqli_real_escape_string( $con, $dest_node_id);
             $timestamp = time();
             $expiry = time() + $config["message_timeout"];
-            $list_pop = mysql_real_escape_string($list_pop, $con);
-            $timestamp = mysql_real_escape_string($timestamp, $con);
-            $expiry = mysql_real_escape_string($expiry, $con);
+            $list_pop = mysqli_real_escape_string( $con, $list_pop);
+            $timestamp = mysqli_real_escape_string( $con, $timestamp);
+            $expiry = mysqli_real_escape_string( $con, $expiry);
             $sql = "INSERT INTO `messages` (`node_id`, `message`, `list_pop`, `timestamp`, `cleanup_expiry`) VALUES ('$dest_node_id', '$msg', $list_pop, $timestamp, $expiry);";
-            mysql_query($sql);
+            mysqli_query($GLOBALS["___mysqli_ston"], $sql);
             echo("success");
             break;
 
@@ -292,12 +292,12 @@ if(!empty($call) && !empty($node_id))
             }
 
             #Delete old messages.
-            $node_id = mysql_real_escape_string($node_id, $con);
+            $node_id = mysqli_real_escape_string( $con, $node_id);
             foreach($old_ids as $old_id)
             {
-                $old_id = mysql_real_escape_string($old_id, $con);
+                $old_id = mysqli_real_escape_string( $con, $old_id);
                 $sql = "DELETE FROM `messages` WHERE `id`='$old_id' AND `list_pop`=1";
-                mysql_query($sql);
+                mysqli_query($GLOBALS["___mysqli_ston"], $sql);
             }
             
             #Update node last alive.
@@ -316,7 +316,7 @@ if(!empty($call) && !empty($node_id))
     }
 }
 
-mysql_close($con);
+((is_null($___mysqli_res = mysqli_close($con))) ? false : $___mysqli_res);
 flush();
 ob_flush();
 
