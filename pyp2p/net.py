@@ -42,7 +42,8 @@ sim_open_interval = 2
 # Bootstrapping + TCP hole punching server.
 rendezvous_servers = [
     {
-        "addr": "162.243.213.95",
+        "addr": "157.245.173.223",
+        # "addr": "162.243.213.95",
         "port": 8000
     }
 ]
@@ -50,13 +51,14 @@ rendezvous_servers = [
 # Web server running script to test port forwarding.
 # And get WAN IP address.
 forwarding_servers = [
+    # {
+    #     "addr": "185.86.149.128",
+    #     "port": 80,
+    #     "url": "/net.php"
+    # },
     {
-        "addr": "185.86.149.128",
-        "port": 80,
-        "url": "/net.php"
-    },
-    {
-        "addr": "185.61.148.22",
+        "addr": "157.245.173.223",
+        # "addr": "185.61.148.22",
         "port": 80,
         "url": "/net.php"
     }
